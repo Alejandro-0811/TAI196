@@ -1,2 +1,37 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Sobrescribe el archivo .gitignore
+# (Puedes usar un editor de texto o este comando)
+echo "# Entorno Virtual de Python
+venv/
+env/
+.env
+.venv
+
+# Archivos de Python
+_pycache_/
+*.py[cod]
+*$py.class
+
+# Entornos de Desarrollo
+.idea/
+.vscode/
+
+# Archivos de Logs
+*.log
+
+# Archivos de Dependencias
+*.egg-info/
+dist/
+build/
+
+# Archivos de Sistema
+.DS_Store
+Thumbs.db" > .gitignore
+
+# Ignorar todos los archivos
+*
+# Pero permitir el entorno virtual
+!entornoAPI/
+# Asegúrate de incluir explícitamente archivos relevantes
+!.gitignore
