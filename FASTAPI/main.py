@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from typing import Optional
 
 app = FastAPI(
@@ -21,45 +21,37 @@ usuarios=[
 def main():
     return {'Hello World, ale chavez'}
 
-@app.get('/promedio',tags=["Calificación"])
+#endpoint consultar todos los usuarios
+@app.get('/usuarios',tags=["Operaciones CRUD"])
+def CosultarTodos():
+    return {"usuarios registrados":usuarios}
 
-def promedio():
-    return {'12'}
+#endpoint agreagar un usuario
 
-@app.get('/usuario/{id}',tags=['Parametro obligatorio'])
-def consultaUsuario(id:int):
-    #conectamosBD
-    #hacemos consulta retornamos resultset
-    return{"Se encontro usuario": id}
+@app.post('/usuarios/',tags=["Operaciones CRUD"])
+def AgregarUsuario(usuarionuevo: dict):
+    for usr in usuarios:
+        if usr["id"]==usuarionuevo.get("id"):
+            raise HTTPException(status_code=400, detail="el id ya existe")
+    usuarios.append(usuarionuevo)
+    return usuarionuevo
 
-@app.get('/usuariox/',tags=['Parametro opcional'])
-def consultaUsuario2(id:Optional[int]=None):
-    if id is not None: 
-        for usuario in usuarios:
-            if usuario ["id"] == id:
-                return {"mensaje":"Usuario encontrado", "usuario":usuario}
-        return{"mensaje":f"No se encontro el id:{id}"}
-    else:
-        return{"mensaje":"No se proporciono"}
+#endpoint actualizar usuario
+@app.put('/usuarios/{id}',tags=["Operaciones CRUD"])
+def ActualizarUsuario (id:int,usuarioactualizado:dict):
+    for usr in usuarios:
+        if usr["id"]==id:
+            usr.update(usuarioactualizado)
+            return {"usuario actualizado"}
+    raise HTTPException(status_code=404,detail="usuario no encontrado")
+    
 
-#endpoint con varios parametro opcionales
-@app.get("/usuarios/", tags=["3 parámetros opcionales"])
-async def consulta_usuarios(
-    usuario_id: Optional[int] = None,
-    nombre: Optional[str] = None,
-    edad: Optional[int] = None
-):
-    resultados = []
 
-    for usuario in usuarios:
-        if (
-            (usuario_id is None or usuario["id"] == usuario_id) and
-            (nombre is None or usuario["nombre"].lower() == nombre.lower()) and
-            (edad is None or usuario["edad"] == edad)
-        ):
-            resultados.append(usuario)
-
-    if resultados:
-        return {"usuarios_encontrados": resultados}
-    else:
-        return {"mensaje": "No se encontraron usuarios que coincidan con los parámetros proporcionados."}
+#endpoint eliminar usuario
+@app.delete('/usuarios/{id}',tags=["Operaciones CRUD"])
+def EliminarUsuario(id:int):
+    for i in range(len(usuarios)):
+        if usuarios[i]["id"]==id:
+            usuarios.pop(i)
+            return {"mensaje":"usuario eliminado"}
+    raise HTTPException(status_code=404,detail="usuario no encontrado")
