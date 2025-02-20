@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from typing import Optional 
 #declaramos un objeto 
 app = FastAPI(
-    title='Mi primer API 196', 
+    title='Tareas', 
     description='Chávez Becerra Brayan Alejandro',
     version='1.0.1'
 )
@@ -19,7 +19,13 @@ tareas=[
 def ConsultarTodas():
     return {"Tareas":tareas}
 
-
+#Obtener una tarea específica por su ID.
+@app.get('/tareaid/{id}', tags=['Tareas'])
+def ConsultarPorId(id:int):
+    for tarea in tareas:
+        if tarea["id"]==id:
+            return tarea
+    return {"mensaje":"Tarea no encontrada"}
 
 
 
