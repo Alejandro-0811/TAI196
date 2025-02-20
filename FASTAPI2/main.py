@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from typing import Optional 
 #declaramos un objeto 
 app = FastAPI(
@@ -26,6 +26,15 @@ def ConsultarPorId(id:int):
         if tarea["id"]==id:
             return tarea
     return {"mensaje":"Tarea no encontrada"}
+
+#Crear una nueva tarea.
+@app.post('/tareas/', tags=['Tareas'])
+def AgregarTarea(tareaNueva: dict):
+    for tarea in tareas:
+        if tarea["id"]==tareaNueva.get("id"):
+            raise HTTPException(status_code=400, detail="El id ya existe")
+    tareas.append(tareaNueva)
+    return tareaNueva
 
 
 
