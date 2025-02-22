@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from typing import Optional
+from typing import Optional, List
+from pydantic import BaseModel
 
 app = FastAPI(
     title='Mi primer API 196',
@@ -7,11 +8,19 @@ app = FastAPI(
     version='1.0.1'
 )
 
+
+#modelo de validacion de datos
+class modelUsuario(BaseModel):
+    id:int
+    nombre:str
+    edad:int
+    correo:str
+
 usuarios=[
-   {"id": 1,"nombre": "Rayo","edad": 22},
-   {"id": 2,"nombre": "issac","edad": 21},
-   {"id": 3,"nombre": "emi","edad": 23},
-   {"id": 4,"nombre": "joss","edad": 20}
+   {"id": 1,"nombre": "Rayo","edad": 22, "correo":"rayo@example.com"},
+   {"id": 2,"nombre": "issac","edad": 21, "correo":"issac@example.com"},
+   {"id": 3,"nombre": "emi","edad": 23, "correo":"emi@example.com"},
+   {"id": 4,"nombre": "joss","edad": 20, "correo":"joss@example.com"}
 
 
 ]
@@ -22,26 +31,26 @@ def main():
     return {'Hello World, ale chavez'}
 
 #endpoint consultar todos los usuarios
-@app.get('/usuarios',tags=["Operaciones CRUD"])
+@app.get('/usuarios',response_model=List[modelUsuario], tags=["Operaciones CRUD"])
 def CosultarTodos():
-    return {"usuarios registrados":usuarios}
+    return usuarios
 
 #endpoint agreagar un usuario
 
-@app.post('/usuarios/',tags=["Operaciones CRUD"])
-def AgregarUsuario(usuarionuevo: dict):
+@app.post('/usuarios/',response_model=modelUsuario, tags=["Operaciones CRUD"])
+def AgregarUsuario(usuarionuevo: modelUsuario):
     for usr in usuarios:
-        if usr["id"]==usuarionuevo.get("id"):
+        if usr["id"]==usuarionuevo.id:
             raise HTTPException(status_code=400, detail="el id ya existe")
     usuarios.append(usuarionuevo)
     return usuarionuevo
 
 #endpoint actualizar usuario
-@app.put('/usuarios/{id}',tags=["Operaciones CRUD"])
-def ActualizarUsuario (id:int,usuarioactualizado:dict):
-    for usr in usuarios:
+@app.put('/usuarios/{id}',response_model=modelUsuario, tags=["Operaciones CRUD"])
+def ActualizarUsuario (id:int,usuarioactualizado:modelUsuario):
+    for index, usr in enumerate (usuarios):
         if usr["id"]==id:
-            usr.update(usuarioactualizado)
+            usuarios[index]= usuarioactualizado.model_dump()
             return {"usuario actualizado"}
     raise HTTPException(status_code=404,detail="usuario no encontrado")
     

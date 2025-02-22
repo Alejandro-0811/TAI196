@@ -53,6 +53,3 @@ def EliminarTarea(id:int):
             tareas.pop(i)
             return {"mensaje":"Tarea eliminada"}
     raise HTTPException(status_code=404, detail="Tarea no encontrada")
-
-
-
