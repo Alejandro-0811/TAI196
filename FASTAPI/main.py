@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from typing import Optional, List
 from modelsPydantic import modelUsuario, modelAuth
 from TokenGen import createtoken 
+from DB.conexion import Session, engine, Base
+from models.modelsDB import User
 
 app = FastAPI(
     title='Mi primer API 196',
@@ -11,6 +13,8 @@ app = FastAPI(
     version='1.0.1'
 )
 
+#levanta las tablas definidas en los modelos
+Base.metadata.create_all(bind=engine)
 
 usuarios=[
    {"id": 1,"nombre": "Rayo","edad": 22, "correo":"rayo@example.com"},
@@ -40,15 +44,19 @@ def login(autorizado: modelAuth):
 def CosultarTodos():
     return usuarios
 
-#endpoint agreagar un usuario
-
+#endpoint agregar un usuario
 @app.post('/usuarios/',response_model=modelUsuario, tags=["Operaciones CRUD"])
 def AgregarUsuario(usuarionuevo: modelUsuario):
-    for usr in usuarios:
-        if usr["id"]==usuarionuevo.id:
-            raise HTTPException(status_code=400, detail="el id ya existe")
-    usuarios.append(usuarionuevo)
-    return usuarionuevo
+    db = Session()
+    try: 
+        db.add(User(**usuarionuevo.model_dump()))
+        db.commit()
+        return JSONResponse(status_code=201,content={"mensaje":"usuario agregado", "usuario":usuarionuevo.model_dump()})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500,content={"mensaje":"usuario no agregado", "Excepcion":str(e)})
+    finally:
+        db.close()
 
 #endpoint actualizar usuario
 @app.put('/usuarios/{id}',response_model=modelUsuario, tags=["Operaciones CRUD"])
