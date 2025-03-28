@@ -82,24 +82,44 @@ def AgregarUsuario(usuarionuevo: modelUsuario):
         db.close()
 
 #endpoint actualizar usuario
-""" @app.put('/usuarios/{id}',response_model=modelUsuario, tags=["Operaciones CRUD"])
-def ActualizarUsuario (id:int,usuarioactualizado:modelUsuario):
-    for index, usr in enumerate (usuarios):
-        if usr["id"]==id:
-            usuarios[index]= usuarioactualizado.model_dump()
-            return {"usuario actualizado"}
-    raise HTTPException(status_code=404,detail="usuario no encontrado")
+@app.put('/usuarios/{id}',tags=["Operaciones CRUD"])
+def ActualizarUsuario(id:int, usuarioactualizado: modelUsuario):
+    db = Session()
+    try:
+        consulta=db.query(User).filter(User.id==id).first()
+        if not consulta:
+            return JSONResponse(content={"mensaje":"Usuario no encontrado"})
+        
+        db.query(User).filter(User.id==id).update(usuarioactualizado.model_dump())
+        db.commit()
+        return JSONResponse(content={"mensaje":"usuario actualizado"})
+    
+    except Exception as x:
+        return JSONResponse(status_code=404,content={"mensaje":"Error al consultar los usuarios", "Excepcion":str(x)})
+    
+    finally:
+        db.close()
     
 
 
 #endpoint eliminar usuario
 @app.delete('/usuarios/{id}',tags=["Operaciones CRUD"])
 def EliminarUsuario(id:int):
-    for i in range(len(usuarios)):
-        if usuarios[i]["id"]==id:
-            usuarios.pop(i)
-            return {"mensaje":"usuario eliminado"}
-    raise HTTPException(status_code=404,detail="usuario no encontrado") """
+    db = Session()
+    try:
+        consulta=db.query(User).filter(User.id==id).first()
+        if not consulta:
+            return JSONResponse(content={"mensaje":"Usuario no encontrado"})
+        
+        db.query(User).filter(User.id==id).delete()
+        db.commit()
+        return JSONResponse(content={"mensaje":"usuario eliminado"})
+    
+    except Exception as x:
+        return JSONResponse(status_code=404,content={"mensaje":"Error al consultar los usuarios", "Excepcion":str(x)})
+    
+    finally:
+        db.close()
 
 
 @app.post('/auth/',tags=["Autenticacion"])
