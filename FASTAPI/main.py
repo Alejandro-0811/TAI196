@@ -1,12 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends
-from middlewares import BearerJWT
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-from typing import Optional, List
-from modelsPydantic import modelUsuario, modelAuth
-from TokenGen import createtoken 
-from DB.conexion import Session, engine, Base
-from models.modelsDB import User
+from fastapi import FastAPI
+from DB.conexion import  engine, Base
+from routers.usuarios import routerUsuario
+from routers.auth import routerAuth
 
 app = FastAPI(
     title='Mi primer API 196',
@@ -17,116 +12,15 @@ app = FastAPI(
 #levanta las tablas definidas en los modelos
 Base.metadata.create_all(bind=engine)
 
-usuarios=[
-   {"id": 1,"nombre": "Rayo","edad": 22, "correo":"rayo@example.com"},
-   {"id": 2,"nombre": "issac","edad": 21, "correo":"issac@example.com"},
-   {"id": 3,"nombre": "emi","edad": 23, "correo":"emi@example.com"},
-   {"id": 4,"nombre": "joss","edad": 20, "correo":"joss@example.com"}
 
-
-]
-    
 @app.get('/',tags=["Inicio"])
 
 def main():
     return {'Hello World, ale chavez'}
 
-
-
-#dependencies=[Depends(BearerJWT())]        
-
-#endpoint consultar todos los usuarios
-@app.get('/usuarios', tags=["Operaciones CRUD"])
-def CosultarTodos():
-    db = Session()
-    try:
-        consulta=db.query(User).all()
-        return JSONResponse(content=jsonable_encoder(consulta))
-    
-    except Exception as x:
-        return JSONResponse(status_code=500,content={"mensaje":"Error al consultar los usuarios", "Excepcion":str(x)})
-    
-    finally:
-        db.close()
-
-#endpoint consultar un usuario por id
-@app.get('/usuarios/{id}', tags=["Operaciones CRUD"])
-def CosultarUno(id:int):
-    db = Session()
-    try:
-        consulta=db.query(User).filter(User.id==id).first()
-        if not consulta:
-            return JSONResponse(content={"mensaje":"Usuario no encontrado"})
-        
-        return JSONResponse(content=jsonable_encoder(consulta))
-    
-    except Exception as x:
-        return JSONResponse(status_code=404,content={"mensaje":"Error al consultar los usuarios", "Excepcion":str(x)})
-    
-    finally:
-        db.close()
-    
-
-#endpoint agregar un usuario
-@app.post('/usuarios/',response_model=modelUsuario, tags=["Operaciones CRUD"])
-def AgregarUsuario(usuarionuevo: modelUsuario):
-    db = Session()
-    try: 
-        db.add(User(**usuarionuevo.model_dump()))
-        db.commit()
-        return JSONResponse(status_code=201,content={"mensaje":"usuario agregado", "usuario":usuarionuevo.model_dump()})
-    except Exception as e:
-        db.rollback()
-        return JSONResponse(status_code=500,content={"mensaje":"usuario no agregado", "Excepcion":str(e)})
-    finally:
-        db.close()
-
-#endpoint actualizar usuario
-@app.put('/usuarios/{id}',tags=["Operaciones CRUD"])
-def ActualizarUsuario(id:int, usuarioactualizado: modelUsuario):
-    db = Session()
-    try:
-        consulta=db.query(User).filter(User.id==id).first()
-        if not consulta:
-            return JSONResponse(content={"mensaje":"Usuario no encontrado"})
-        
-        db.query(User).filter(User.id==id).update(usuarioactualizado.model_dump())
-        db.commit()
-        return JSONResponse(content={"mensaje":"usuario actualizado"})
-    
-    except Exception as x:
-        return JSONResponse(status_code=404,content={"mensaje":"Error al consultar los usuarios", "Excepcion":str(x)})
-    
-    finally:
-        db.close()
+app.include_router(routerUsuario)
+app.include_router(routerAuth)
     
 
 
-#endpoint eliminar usuario
-@app.delete('/usuarios/{id}',tags=["Operaciones CRUD"])
-def EliminarUsuario(id:int):
-    db = Session()
-    try:
-        consulta=db.query(User).filter(User.id==id).first()
-        if not consulta:
-            return JSONResponse(content={"mensaje":"Usuario no encontrado"})
-        
-        db.query(User).filter(User.id==id).delete()
-        db.commit()
-        return JSONResponse(content={"mensaje":"usuario eliminado"})
-    
-    except Exception as x:
-        return JSONResponse(status_code=404,content={"mensaje":"Error al consultar los usuarios", "Excepcion":str(x)})
-    
-    finally:
-        db.close()
 
-
-@app.post('/auth/',tags=["Autenticacion"])
-def login(autorizado: modelAuth):
-    if autorizado.correo=="ale@example.com" and autorizado.passw=="ale12345":
-        token:str=createtoken({"usuario":autorizado.model_dump()})
-        print(token)
-        return JSONResponse(content=token)
-    else:
-        return {"AVISO":"Usuario no autorizado"}
